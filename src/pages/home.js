@@ -1,4 +1,5 @@
 import React, { Component }  from 'react';
+import Graph from '../modules/graph_gen';
 
 export class Home extends Component {
 
@@ -9,7 +10,7 @@ export class Home extends Component {
   render () {
     return (
       <div className="page-content">
-        
+        <Graph />
       </div>
     )
   }
