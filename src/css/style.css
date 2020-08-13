@@ -1,5 +1,4 @@
 @import "https://fonts.googleapis.com/css?family=Source+Sans+Pro|Baloo+Thambi+2|Nunito|Work+Sans|Open+Sans";
-@import "~/react-vis/dist/style";
 @import url('loader.css');
 @import url('header.css');
 
@@ -74,6 +73,11 @@ body { margin: 0; padding: 0; }
   transition: 3s;
 }
 .graph > .rv-xy-plot {
+  margin: auto;
+}
+.graph-data {
+  height: 300px;
+  width: 1200px;
   margin: auto;
 }
 .graph-data-raw {
