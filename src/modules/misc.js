@@ -1,7 +1,7 @@
 module.exports = { GetDate };
 
 function GetDate(time, type) {
-  if(type === "hour") { var date = new Date(new Date() - (time * (60 * 60 * 1000))); return date; }
+  if(type === "hour") { return new Date(new Date() - (time * (60 * 60 * 1000))); }
   else if(type === "day") {
     var date = new Date();
     date.setDate(date.getDate() - time);

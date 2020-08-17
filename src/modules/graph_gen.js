@@ -1,5 +1,5 @@
 import React, { Component }  from 'react';
-import { XYPlot, XAxis, YAxis, VerticalGridLines, HorizontalGridLines, LineSeries, AreaSeries } from 'react-vis';
+import { XYPlot, XAxis, YAxis, VerticalGridLines, AreaSeries } from 'react-vis';
 import Error from './error';
 import Loader from './loader';
 import * as apiRequest from '../modules/api';
@@ -26,18 +26,13 @@ export class Graph extends Component {
 
   async GetAnalytics() {
     const solarData = (await apiRequest.GetMonthlyStatus()).data;
-    const today_ago = Misc.GetDate(0, "day");
-    const hour_ago = Misc.GetDate(1, "hour");
-    const day_ago = Misc.GetDate(1, "day");
-    const week_ago = Misc.GetDate(7, "day");
-    const month_ago = Misc.GetDate(31, "day");
 
     //Status data from the SQL
-    let today = solarData.filter(e => new Date(e.datetime) > today_ago);
-    let hourly = solarData.filter(e => new Date(e.datetime) > hour_ago);
-    let daily = solarData.filter(e => new Date(e.datetime) > day_ago);
-    let weekly = solarData.filter(e => new Date(e.datetime) > week_ago);
-    let monthly = solarData.filter(e => new Date(e.datetime) > month_ago);
+    let today = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(0, "day"));
+    let hourly = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(1, "hour"));
+    let daily = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(1, "day"));
+    let weekly = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(7, "day"));
+    let monthly = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(31, "day"));
 
     this.setState({
       status: { status: 'settingGraphData', statusText: `Defining X and Y Coordinates`, loading: false },
@@ -87,8 +82,8 @@ export class Graph extends Component {
   }
 
   render () {
-    const { status, statusText, error } = this.state.status;
-    const { generating, consuming, watts_used, daily_usage_kWh, daily_paid_usage_kWh, daily_sold_usage_kWh, daily_generated_kWh } = this.state.graphData;
+    const { status, statusText } = this.state.status;
+    const { generating, consuming, daily_usage_kWh, daily_paid_usage_kWh, daily_sold_usage_kWh, daily_generated_kWh } = this.state.graphData;
     if(status === "error") { return (<div className="graph"><Error statusText={ statusText } /></div>) }
     else if(status === "ready") {
       return (
@@ -108,7 +103,7 @@ export class Graph extends Component {
             <div>Daily Usage: { daily_usage_kWh.toFixed(2) } kWh</div>
             <div>Daily Paid Usage: { daily_paid_usage_kWh.toFixed(2) } kWh ${ ((daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) } @ 32c/kWh</div>
             <div>Daily Solar Sold: { daily_sold_usage_kWh.toFixed(2) } kWh ${ ((daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) } @ 16c/kWh</div>
-            <div>Total Daily Profit/Loss: ${ ((daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) - ((daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) }</div>
+            <div>Total Daily Profit/Loss: ${ (((daily_sold_usage_kWh.toFixed(2) * 16) / 100) - ((daily_paid_usage_kWh.toFixed(2) * 32) / 100)).toFixed(2) }</div>
           </div>
           <div className="graph-data-raw">{ JSON.stringify(this.state.data[this.state.selectedGraph]) }</div>
         </div>
