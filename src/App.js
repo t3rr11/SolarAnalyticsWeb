@@ -6,6 +6,7 @@ import Header from './modules/header';
 
 //Pages
 import Home from './pages/home';
+import Faults from './pages/faults';
 
 class App extends React.Component {
 
@@ -48,6 +49,7 @@ class App extends React.Component {
           <Switch>
             <Route exact path="/" render={ props => (<Home />) } />
             <Route path="/home" render={ props => (<Home />) } />
+            <Route path="/faults" render={ props => (<Faults />) } />
           </Switch>
         </div>
       </Router>

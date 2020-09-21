@@ -1,6 +1,7 @@
 @import "https://fonts.googleapis.com/css?family=Source+Sans+Pro|Baloo+Thambi+2|Nunito|Work+Sans|Open+Sans";
 @import url('loader.css');
 @import url('header.css');
+@import url('faults.css');
 
 :root {
   --DarkerNavyBlue: #181a1f;

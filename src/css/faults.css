@@ -1,0 +1,15 @@
+.faults-container {
+  padding-top: 25px;
+}
+.faults-table {
+  height: 700px;
+  width: max-content;
+  overflow-y: auto;
+  margin: auto;
+}
+.faults-row {
+  display: grid;
+  grid-template-columns: 100px 100px 300px 100px 200px 250px;
+  width: max-content;
+  margin: auto;
+}

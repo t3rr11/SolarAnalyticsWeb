@@ -25,6 +25,11 @@ export class Header extends Component {
             <Link className="header-link" to="/inverter" onClick={ () => this.props.setPage("inverter") }>Inverter Info</Link>
             <img alt="arrow-icon" className="header-menu-item-arrow" src="/images/icons/arrow.png" />
           </div>
+          <div className={ `header-menu-item ${ this.props.currentPage === "faults" ? "active" : "" }` }>
+            <img alt="dash-icon" className="header-menu-item-icon" src="/images/icons/error.png" />
+            <Link className="header-link" to="/faults" onClick={ () => this.props.setPage("faults") }>Faults</Link>
+            <img alt="arrow-icon" className="header-menu-item-arrow" src="/images/icons/arrow.png" />
+          </div>
         </div>
         <div className="header-buttons">
           <div className="spacer"></div>
