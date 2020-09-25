@@ -2,6 +2,7 @@
 @import url('loader.css');
 @import url('header.css');
 @import url('faults.css');
+@import url('graph.css');
 
 :root {
   --DarkerNavyBlue: #181a1f;
@@ -72,19 +73,4 @@ body { margin: 0; padding: 0; }
   stroke: url(#gloryGradient);
   stroke-dasharray: 198;
   transition: 3s;
-}
-.graph > .rv-xy-plot {
-  margin: auto;
-}
-.graph-data {
-  height: 300px;
-  width: 1200px;
-  margin: auto;
-}
-.graph-data-raw {
-  height: 300px;
-  width: 1200px;
-  margin: auto;
-  overflow-x: hidden;
-  overflow-y: scroll;
 }

@@ -1,0 +1,12 @@
+.graph > .rv-xy-plot {
+  margin: auto;
+}
+.graph-container {
+  display: inline-grid;
+  grid-template-columns: auto max-content;
+  padding-top: 20px;
+}
+.graph-data {
+  width: 350px;
+  margin: auto;
+}

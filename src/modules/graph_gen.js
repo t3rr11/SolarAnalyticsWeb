@@ -43,7 +43,22 @@ export class Graph extends Component {
   }
 
   async SetGraphData() {
-    var data = this.state.data[this.state.selectedGraph];
+
+    let graph_data = {
+      "today": this.GetGraphData("today"),
+      "hourly": this.GetGraphData("hourly"),
+      "daily": this.GetGraphData("daily"),
+      "weekly": this.GetGraphData("weekly"),
+      "monthly": this.GetGraphData("monthly"),
+    };
+
+    console.log(graph_data);
+
+    this.setState({ status: { status: 'ready', statusText: `Finished Loading Analytics.`, loading: false }, graph_data });
+  }
+
+  GetGraphData(timeFrame) {
+    var data = this.state.data[timeFrame];
     var generating = []
     var consuming = []
     var watts_used = 0;
@@ -67,45 +82,62 @@ export class Graph extends Component {
     daily_sold_usage_kWh = (Math.abs(sold_watts / 1000)) / ((new Date() - new Date(`${ new Date().getFullYear() }-${ new Date().getMonth()+1 }-${ new Date().getDate() }`)) / 1000 / 60 / 60).toFixed(2);
     daily_generated_kWh = (data[data.length-1].total_energy_produced - data[0].total_energy_produced) / 1000;
 
-    this.setState({
-      status: { status: 'ready', statusText: `Finished Loading Analytics.`, loading: false },
-      graphData: {
-        generating,
-        consuming,
-        watts_used,
-        daily_usage_kWh,
-        daily_paid_usage_kWh,
-        daily_sold_usage_kWh,
-        daily_generated_kWh
-      }
-    });
+    return {
+      generating,
+      consuming,
+      watts_used,
+      daily_usage_kWh,
+      daily_paid_usage_kWh,
+      daily_sold_usage_kWh,
+      daily_generated_kWh
+    }
   }
 
   render () {
     const { status, statusText } = this.state.status;
-    const { generating, consuming, daily_usage_kWh, daily_paid_usage_kWh, daily_sold_usage_kWh, daily_generated_kWh } = this.state.graphData;
     if(status === "error") { return (<div className="graph"><Error statusText={ statusText } /></div>) }
     else if(status === "ready") {
+      const { today, hourly, daily, weekly, monthly } = this.state.graph_data;
       return (
-        <div className="graph-container">
-          <div className="graph">
-            <div className="graph-title">Daily Generation</div>
-            <XYPlot xType="time" width={ 1200 } height={ 300 } margin={{ left: 60 }} >
-              <VerticalGridLines style={{ stroke: "#333333" }} />
-              <XAxis title="Time" />
-              <YAxis title="Watts" />
-              <AreaSeries data={ consuming } color={ "#ff7417" } fill={ "#885838" } opacity={ 0.9 } curve={'curveLinear'} />
-              <AreaSeries data={ generating } color={ "#00a6ef" } fill={ "#2d7a9c" } opacity={ 0.7 } curve={'curveLinear'} />
-            </XYPlot>
+        <div className="graph-containers">
+          <div id="daily_graph" className="graph-container">
+            <div className="graph">
+              <div className="graph-title">Daily Generation</div>
+              <XYPlot xType="time" width={ 1200 } height={ 300 } margin={{ left: 60 }} >
+                <VerticalGridLines style={{ stroke: "#333333" }} />
+                <XAxis title="Time" />
+                <YAxis title="Watts" />
+                <AreaSeries data={ today.consuming } color={ "#ff7417" } fill={ "#885838" } opacity={ 0.9 } curve={'curveLinear'} />
+                <AreaSeries data={ today.generating } color={ "#00a6ef" } fill={ "#2d7a9c" } opacity={ 0.7 } curve={'curveLinear'} />
+              </XYPlot>
+            </div>
+            <div className="graph-data">
+              <div>Daily Generation: { today.daily_generated_kWh.toFixed(2) } kWh</div>
+              <div>Daily Usage: { today.daily_usage_kWh.toFixed(2) } kWh</div>
+              <div>Daily Paid Usage: { today.daily_paid_usage_kWh.toFixed(2) } kWh ${ ((today.daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) } @ 32c/kWh</div>
+              <div>Daily Solar Sold: { today.daily_sold_usage_kWh.toFixed(2) } kWh ${ ((today.daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) } @ 16c/kWh</div>
+              <div>Total Daily Profit/Loss: ${ (((today.daily_sold_usage_kWh.toFixed(2) * 16) / 100) - ((today.daily_paid_usage_kWh.toFixed(2) * 32) / 100)).toFixed(2) }</div>
+            </div>
           </div>
-          <div className="graph-data">
-            <div>Daily Generation: { daily_generated_kWh.toFixed(2) } kWh</div>
-            <div>Daily Usage: { daily_usage_kWh.toFixed(2) } kWh</div>
-            <div>Daily Paid Usage: { daily_paid_usage_kWh.toFixed(2) } kWh ${ ((daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) } @ 32c/kWh</div>
-            <div>Daily Solar Sold: { daily_sold_usage_kWh.toFixed(2) } kWh ${ ((daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) } @ 16c/kWh</div>
-            <div>Total Daily Profit/Loss: ${ (((daily_sold_usage_kWh.toFixed(2) * 16) / 100) - ((daily_paid_usage_kWh.toFixed(2) * 32) / 100)).toFixed(2) }</div>
+          <div id="weekly_graph" className="graph-container">
+            <div className="graph">
+              <div className="graph-title">Weekly Generation</div>
+              <XYPlot xType="time" width={ 1200 } height={ 300 } margin={{ left: 60 }} >
+                <VerticalGridLines style={{ stroke: "#333333" }} />
+                <XAxis title="Time" />
+                <YAxis title="Watts" />
+                <AreaSeries data={ weekly.consuming } color={ "#ff7417" } fill={ "#885838" } opacity={ 0.9 } curve={'curveLinear'} />
+                <AreaSeries data={ weekly.generating } color={ "#00a6ef" } fill={ "#2d7a9c" } opacity={ 0.7 } curve={'curveLinear'} />
+              </XYPlot>
+            </div>
+            <div className="graph-data">
+              <div>Daily Generation: { weekly.daily_generated_kWh.toFixed(2) } kWh</div>
+              <div>Daily Usage: { weekly.daily_usage_kWh.toFixed(2) } kWh</div>
+              <div>Daily Paid Usage: { weekly.daily_paid_usage_kWh.toFixed(2) } kWh ${ ((weekly.daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) } @ 32c/kWh</div>
+              <div>Daily Solar Sold: { weekly.daily_sold_usage_kWh.toFixed(2) } kWh ${ ((weekly.daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) } @ 16c/kWh</div>
+              <div>Total Daily Profit/Loss: ${ (((weekly.daily_sold_usage_kWh.toFixed(2) * 16) / 100) - ((weekly.daily_paid_usage_kWh.toFixed(2) * 32) / 100)).toFixed(2) }</div>
+            </div>
           </div>
-          <div className="graph-data-raw">{ JSON.stringify(this.state.data[this.state.selectedGraph]) }</div>
         </div>
       )
     }
