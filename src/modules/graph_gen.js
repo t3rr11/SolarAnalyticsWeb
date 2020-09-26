@@ -29,14 +29,16 @@ export class Graph extends Component {
 
     //Status data from the SQL
     let today = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(0, "day"));
-    let hourly = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(1, "hour"));
-    let daily = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(1, "day"));
     let weekly = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(7, "day"));
     let monthly = solarData.filter(e => new Date(e.datetime) > Misc.GetDate(31, "day"));
 
     this.setState({
       status: { status: 'settingGraphData', statusText: `Defining X and Y Coordinates`, loading: false },
-      data: { today, hourly, daily, weekly, monthly }
+      data: { 
+        today, today,
+        weekly: weekly.filter((value, index, Arr) => { return index % 2 == 0 }),
+        monthly: monthly.filter((value, index, Arr) => { return index % 6 == 0 })
+      }
     });
 
     this.SetGraphData();
@@ -46,8 +48,6 @@ export class Graph extends Component {
 
     let graph_data = {
       "today": this.GetGraphData("today"),
-      "hourly": this.GetGraphData("hourly"),
-      "daily": this.GetGraphData("daily"),
       "weekly": this.GetGraphData("weekly"),
       "monthly": this.GetGraphData("monthly"),
     };
@@ -59,37 +59,45 @@ export class Graph extends Component {
 
   GetGraphData(timeFrame) {
     var data = this.state.data[timeFrame];
-    var generating = []
-    var consuming = []
+    var generating_data = [];
+    var consuming_data = [];
     var watts_used = 0;
     var paid_watts = 0;
     var sold_watts = 0;
-    var daily_usage_kWh = 0;
-    var daily_paid_usage_kWh = 0;
-    var daily_sold_usage_kWh = 0;
-    var daily_generated_kWh = 0;
 
+    var data5 = [];
     for(var i in data) {
-      generating.push({ x: new Date(data[i].datetime), y: data[i].generating });
-      consuming.push({ x: new Date(data[i].datetime), y: data[i].consumption + data[i].generating });
-      watts_used += data[i].consumption + data[i].generating;
-      paid_watts += data[i].consumption > 0 ? data[i].consumption : 0;
-      sold_watts += data[i].consumption < 0 ? data[i].consumption : 0;
+      //Since i am logging data every minute to avoid clouds from causing violent spikes in graph i am averaging data into 5 minute intervals.
+      if(i % 5 == 0) {
+        //Push 5th dataset into data5 array
+        data5.push(data[i]);
+
+        //Sort them into arrays
+        var generating_array = data5.map(data => data.generating);
+        var consumption_array = data5.map(data => data.consumption);
+
+        //Then average them using reduce
+        var generating = generating_array.reduce((sum, value) => { return sum + value }, 0) / generating_array.length;
+        var consumption = consumption_array.reduce((sum, value) => { return sum + value }, 0) / consumption_array.length;
+
+        //Push data to final array
+        generating_data.push({ x: new Date(data[i].datetime), y: generating });
+        consuming_data.push({ x: new Date(data[i].datetime), y: consumption + generating });
+        watts_used += consumption + generating;
+        paid_watts += consumption > 0 ? consumption : 0;
+        sold_watts += consumption < 0 ? consumption : 0;
+        
+        
+        //Empty data5
+        data5 = [];
+      }
+      else { data5.push(data[i]); }
     }
 
-    daily_usage_kWh = (watts_used / 1000) / ((new Date() - new Date(`${ new Date().getFullYear() }-${ new Date().getMonth()+1 }-${ new Date().getDate() }`)) / 1000 / 60 / 60).toFixed(2);
-    daily_paid_usage_kWh = (paid_watts / 1000) / ((new Date() - new Date(`${ new Date().getFullYear() }-${ new Date().getMonth()+1 }-${ new Date().getDate() }`)) / 1000 / 60 / 60).toFixed(2);
-    daily_sold_usage_kWh = (Math.abs(sold_watts / 1000)) / ((new Date() - new Date(`${ new Date().getFullYear() }-${ new Date().getMonth()+1 }-${ new Date().getDate() }`)) / 1000 / 60 / 60).toFixed(2);
-    daily_generated_kWh = (data[data.length-1].total_energy_produced - data[0].total_energy_produced) / 1000;
-
     return {
-      generating,
-      consuming,
+      generating: generating_data,
+      consuming: consuming_data,
       watts_used,
-      daily_usage_kWh,
-      daily_paid_usage_kWh,
-      daily_sold_usage_kWh,
-      daily_generated_kWh
     }
   }
 
@@ -97,13 +105,13 @@ export class Graph extends Component {
     const { status, statusText } = this.state.status;
     if(status === "error") { return (<div className="graph"><Error statusText={ statusText } /></div>) }
     else if(status === "ready") {
-      const { today, hourly, daily, weekly, monthly } = this.state.graph_data;
+      const { today, weekly, monthly } = this.state.graph_data;
       return (
         <div className="graph-containers">
           <div id="daily_graph" className="graph-container">
             <div className="graph">
-              <div className="graph-title">Daily Generation</div>
-              <XYPlot xType="time" width={ 1200 } height={ 300 } margin={{ left: 60 }} >
+              <div className="graph-title">Daily Generation (5min Interval)</div>
+              <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                 <VerticalGridLines style={{ stroke: "#333333" }} />
                 <XAxis title="Time" />
                 <YAxis title="Watts" />
@@ -112,17 +120,13 @@ export class Graph extends Component {
               </XYPlot>
             </div>
             <div className="graph-data">
-              <div>Daily Generation: { today.daily_generated_kWh.toFixed(2) } kWh</div>
-              <div>Daily Usage: { today.daily_usage_kWh.toFixed(2) } kWh</div>
-              <div>Daily Paid Usage: { today.daily_paid_usage_kWh.toFixed(2) } kWh ${ ((today.daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) } @ 32c/kWh</div>
-              <div>Daily Solar Sold: { today.daily_sold_usage_kWh.toFixed(2) } kWh ${ ((today.daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) } @ 16c/kWh</div>
-              <div>Total Daily Profit/Loss: ${ (((today.daily_sold_usage_kWh.toFixed(2) * 16) / 100) - ((today.daily_paid_usage_kWh.toFixed(2) * 32) / 100)).toFixed(2) }</div>
+              <div>Data goes here:</div>
             </div>
           </div>
           <div id="weekly_graph" className="graph-container">
             <div className="graph">
-              <div className="graph-title">Weekly Generation</div>
-              <XYPlot xType="time" width={ 1200 } height={ 300 } margin={{ left: 60 }} >
+              <div className="graph-title">Weekly Generation (10min Interval)</div>
+              <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                 <VerticalGridLines style={{ stroke: "#333333" }} />
                 <XAxis title="Time" />
                 <YAxis title="Watts" />
@@ -131,11 +135,22 @@ export class Graph extends Component {
               </XYPlot>
             </div>
             <div className="graph-data">
-              <div>Daily Generation: { weekly.daily_generated_kWh.toFixed(2) } kWh</div>
-              <div>Daily Usage: { weekly.daily_usage_kWh.toFixed(2) } kWh</div>
-              <div>Daily Paid Usage: { weekly.daily_paid_usage_kWh.toFixed(2) } kWh ${ ((weekly.daily_paid_usage_kWh.toFixed(2) * 32) / 100).toFixed(2) } @ 32c/kWh</div>
-              <div>Daily Solar Sold: { weekly.daily_sold_usage_kWh.toFixed(2) } kWh ${ ((weekly.daily_sold_usage_kWh.toFixed(2) * 16) / 100).toFixed(2) } @ 16c/kWh</div>
-              <div>Total Daily Profit/Loss: ${ (((weekly.daily_sold_usage_kWh.toFixed(2) * 16) / 100) - ((weekly.daily_paid_usage_kWh.toFixed(2) * 32) / 100)).toFixed(2) }</div>
+              <div>Data goes here:</div>
+            </div>
+          </div>
+          <div id="monthly_graph" className="graph-container">
+            <div className="graph">
+              <div className="graph-title">Monthly Generation (30min Interval)</div>
+              <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
+                <VerticalGridLines style={{ stroke: "#333333" }} />
+                <XAxis title="Time" />
+                <YAxis title="Watts" />
+                <AreaSeries data={ monthly.consuming } color={ "#ff7417" } fill={ "#885838" } opacity={ 0.9 } curve={'curveLinear'} />
+                <AreaSeries data={ monthly.generating } color={ "#00a6ef" } fill={ "#2d7a9c" } opacity={ 0.7 } curve={'curveLinear'} />
+              </XYPlot>
+            </div>
+            <div className="graph-data">
+              <div>Data goes here:</div>
             </div>
           </div>
         </div>
