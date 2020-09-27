@@ -16,7 +16,11 @@ export class Graph extends Component {
     },
     data: { },
     graphData: [],
-    selectedGraph: "today"
+    intervalRate: {
+      today: 1,
+      weekly: 5,
+      monthly: 10,
+    }
   }
 
   async componentDidMount() {
@@ -35,9 +39,9 @@ export class Graph extends Component {
     this.setState({
       status: { status: 'settingGraphData', statusText: `Defining X and Y Coordinates`, loading: false },
       data: { 
-        today, today,
-        weekly: weekly.filter((value, index, Arr) => { return index % 2 == 0 }),
-        monthly: monthly.filter((value, index, Arr) => { return index % 6 == 0 })
+        today: today,
+        weekly: weekly,
+        monthly: monthly
       }
     });
 
@@ -45,15 +49,11 @@ export class Graph extends Component {
   }
 
   async SetGraphData() {
-
     let graph_data = {
       "today": this.GetGraphData("today"),
       "weekly": this.GetGraphData("weekly"),
       "monthly": this.GetGraphData("monthly"),
     };
-
-    console.log(graph_data);
-
     this.setState({ status: { status: 'ready', statusText: `Finished Loading Analytics.`, loading: false }, graph_data });
   }
 
@@ -68,7 +68,7 @@ export class Graph extends Component {
     var data5 = [];
     for(var i in data) {
       //Since i am logging data every minute to avoid clouds from causing violent spikes in graph i am averaging data into 5 minute intervals.
-      if(i % 5 == 0) {
+      if(i % this.state.intervalRate[timeFrame] === 0) {
         //Push 5th dataset into data5 array
         data5.push(data[i]);
 
@@ -87,7 +87,6 @@ export class Graph extends Component {
         paid_watts += consumption > 0 ? consumption : 0;
         sold_watts += consumption < 0 ? consumption : 0;
         
-        
         //Empty data5
         data5 = [];
       }
@@ -98,11 +97,21 @@ export class Graph extends Component {
       generating: generating_data,
       consuming: consuming_data,
       watts_used,
+      paid_watts,
+      sold_watts
     }
+  }
+
+  ChangeGraphInterval(graph, rate) {
+    let intervalRate = this.state.intervalRate;
+    intervalRate[graph] = rate;
+    this.setState({ intervalRate });
+    this.SetGraphData();
   }
 
   render () {
     const { status, statusText } = this.state.status;
+    const intervalRate = this.state.intervalRate;
     if(status === "error") { return (<div className="graph"><Error statusText={ statusText } /></div>) }
     else if(status === "ready") {
       const { today, weekly, monthly } = this.state.graph_data;
@@ -110,7 +119,7 @@ export class Graph extends Component {
         <div className="graph-containers">
           <div id="daily_graph" className="graph-container">
             <div className="graph">
-              <div className="graph-title">Daily Generation (5min Interval)</div>
+              <div className="graph-title">Daily Generation ({intervalRate.today}min Interval)</div>
               <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                 <VerticalGridLines style={{ stroke: "#333333" }} />
                 <XAxis title="Time" />
@@ -120,12 +129,17 @@ export class Graph extends Component {
               </XYPlot>
             </div>
             <div className="graph-data">
-              <div>Data goes here:</div>
+              <div>Time Frame</div>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 1)) } value="Change to 1min">1m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 5)) } value="Change to 5min">5m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 10)) } value="Change to 10min">10m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 30)) } value="Change to 10min">30m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 60)) } value="Change to 10min">1hr</button>
             </div>
           </div>
           <div id="weekly_graph" className="graph-container">
             <div className="graph">
-              <div className="graph-title">Weekly Generation (10min Interval)</div>
+              <div className="graph-title">Weekly Generation ({intervalRate.weekly}min Interval)</div>
               <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                 <VerticalGridLines style={{ stroke: "#333333" }} />
                 <XAxis title="Time" />
@@ -135,12 +149,17 @@ export class Graph extends Component {
               </XYPlot>
             </div>
             <div className="graph-data">
-              <div>Data goes here:</div>
+              <div>Time Frame</div>
+              <button onClick={ (() => this.ChangeGraphInterval("weekly", 1)) } value="Change to 1min">1m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("weekly", 5)) } value="Change to 5min">5m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("weekly", 10)) } value="Change to 10min">10m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("weekly", 30)) } value="Change to 10min">30m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("weekly", 60)) } value="Change to 10min">1hr</button>
             </div>
           </div>
           <div id="monthly_graph" className="graph-container">
             <div className="graph">
-              <div className="graph-title">Monthly Generation (30min Interval)</div>
+              <div className="graph-title">Monthly Generation ({intervalRate.monthly}min Interval)</div>
               <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                 <VerticalGridLines style={{ stroke: "#333333" }} />
                 <XAxis title="Time" />
@@ -150,7 +169,12 @@ export class Graph extends Component {
               </XYPlot>
             </div>
             <div className="graph-data">
-              <div>Data goes here:</div>
+              <div>Time Frame</div>
+              <button onClick={ (() => this.ChangeGraphInterval("monthly", 1)) } value="Change to 1min">1m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("monthly", 5)) } value="Change to 5min">5m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("monthly", 10)) } value="Change to 10min">10m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("monthly", 30)) } value="Change to 10min">30m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("monthly", 60)) } value="Change to 10min">1hr</button>
             </div>
           </div>
         </div>
