@@ -39,7 +39,10 @@ export class Live extends Component {
 
       //Add new data
       if(liveData.data.inverter.data.PAC) { generating.push({ x: new Date(), y: liveData.data.inverter.data.PAC.Value }); }
-      if(liveData.data.inverter.data.PAC && liveData.data.voltage.data.PowerReal_P_Sum) { consuming.push({ x: new Date(), y: Math.round(liveData.data.voltage.data.PowerReal_P_Sum + liveData.data.inverter.data.PAC.Value) }); }
+      if(liveData.data.voltage.data.PowerReal_P_Sum) {
+        if(liveData.data.inverter.data.PAC) { consuming.push({ x: new Date(), y: Math.round(liveData.data.voltage.data.PowerReal_P_Sum + liveData.data.inverter.data.PAC.Value) }); }
+        else { consuming.push({ x: new Date(), y: Math.round(liveData.data.voltage.data.PowerReal_P_Sum) }); }
+      }
 
       //Cap array at 1 minute
       if(generating.length > 60){ generating.shift(); }
@@ -65,7 +68,7 @@ export class Live extends Component {
               <div className="graph">
                 <div className="graph-title">Live Generation (10s Interval)</div>
                 <div className="graph-data">
-                  <div>Generating: { generating[generating.length-1].y }W</div>
+                  <div>Generating: { generating[generating.length-1] ? `${ generating[generating.length-1].y }W` : `Offline` }</div>
                 </div>
                 <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                   <VerticalGridLines style={{ stroke: "#333333" }} />
@@ -77,9 +80,9 @@ export class Live extends Component {
             </div>
             <div className="live-consumption">
               <div className="graph">
-                <div className="graph-title">Live Consumption (5s Interval)</div>
+                <div className="graph-title">Live Consumption (10s Interval)</div>
                 <div className="graph-data">
-                  <div>Consusming: { consuming[consuming.length-1].y }W</div>
+                  <div>Consusming: { consuming[consuming.length-1] ? `${ consuming[consuming.length-1].y }W` : `Offline` }</div>
                 </div>
                 <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                   <VerticalGridLines style={{ stroke: "#333333" }} />
