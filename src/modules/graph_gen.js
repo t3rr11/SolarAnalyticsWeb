@@ -5,6 +5,9 @@ import Loader from './loader';
 import * as apiRequest from '../modules/api';
 import Misc from '../modules/misc';
 
+let updateTimer = null;
+let updateCountdown = null;
+
 export class Graph extends Component {
 
   state = {
@@ -20,13 +23,20 @@ export class Graph extends Component {
       today: 1,
       weekly: 5,
       monthly: 10,
-    }
+    },
+    nextUpdate: new Date()
   }
 
   async componentDidMount() {
     this.setState({ status: { status: 'startingUp', statusText: `Getting Solar Analytics...`, loading: true } });
     this.GetAnalytics();
+
+    //Set Interval of Refresh
+    if(updateTimer === null) { updateTimer = setInterval(() => { this.setState({ nextUpdate: new Date().getTime() }); this.GetAnalytics(); }, 60000); }
+    if(updateCountdown === null) { updateCountdown = setInterval(() => { this.setState({ nextUpdate: this.state.nextUpdate }) }, 1000); }
+
   }
+  async componentWillUnmount() { clearInterval(updateTimer); updateTimer = null; clearInterval(updateCountdown); updateCountdown = null; }
 
   async GetAnalytics() {
     const solarData = (await apiRequest.GetMonthlyStatus()).data;
@@ -61,15 +71,18 @@ export class Graph extends Component {
     var data = this.state.data[timeFrame];
     var generating_data = [];
     var consuming_data = [];
+    var ac_voltage_data = [];
     var watts_used = 0;
     var paid_watts = 0;
     var sold_watts = 0;
 
     var data5 = [];
     for(var i in data) {
+      ac_voltage_data.push({ x: new Date(data[i].datetime), y: data[i].ac_voltage });
       //Since i am logging data every minute to avoid clouds from causing violent spikes in graph i am averaging data into 5 minute intervals.
       if(i % this.state.intervalRate[timeFrame] === 0) {
         //Push 5th dataset into data5 array
+        console.log(data[i]);
         data5.push(data[i]);
 
         //Sort them into arrays
@@ -94,6 +107,7 @@ export class Graph extends Component {
     }
 
     return {
+      ac_voltage: ac_voltage_data,
       generating: generating_data,
       consuming: consuming_data,
       watts_used,
@@ -117,6 +131,7 @@ export class Graph extends Component {
       const { today, weekly, monthly } = this.state.graph_data;
       return (
         <div className="graph-containers">
+          <div className="countdown-timer">Next Update: { 60 - Math.round((new Date().getTime() - new Date(this.state.nextUpdate).getTime()) / 1000) }s</div>
           <div id="daily_graph" className="graph-container">
             <div className="graph">
               <div className="graph-title">Daily Generation ({intervalRate.today}min Interval)</div>
@@ -175,6 +190,25 @@ export class Graph extends Component {
               <button onClick={ (() => this.ChangeGraphInterval("monthly", 10)) } value="Change to 10min">10m</button>
               <button onClick={ (() => this.ChangeGraphInterval("monthly", 30)) } value="Change to 10min">30m</button>
               <button onClick={ (() => this.ChangeGraphInterval("monthly", 60)) } value="Change to 10min">1hr</button>
+            </div>
+          </div>
+          <div id="voltage_graph" className="graph-container">
+            <div className="graph">
+              <div className="graph-title">Daily Voltage ({intervalRate.today}min Interval)</div>
+              <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
+                <VerticalGridLines style={{ stroke: "#333333" }} />
+                <XAxis title="Time" />
+                <YAxis title="Watts" />
+                <AreaSeries data={ today.ac_voltage } color={ "#06bb00" } fill={ "#006300" } opacity={ 0.9 } curve={'curveLinear'} />
+              </XYPlot>
+            </div>
+            <div className="graph-data">
+              <div>Time Frame</div>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 1)) } value="Change to 1min">1m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 5)) } value="Change to 5min">5m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 10)) } value="Change to 10min">10m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 30)) } value="Change to 10min">30m</button>
+              <button onClick={ (() => this.ChangeGraphInterval("today", 60)) } value="Change to 10min">1hr</button>
             </div>
           </div>
         </div>

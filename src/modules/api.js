@@ -18,3 +18,4 @@ async function apiRequest(path) {
 }
 
 export const GetMonthlyStatus = async () => apiRequest(`/GetMonthlyStatus`);
+export const GetLiveData = async () => apiRequest(`/GetLiveData`);
