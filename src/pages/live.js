@@ -40,8 +40,19 @@ export class Live extends Component {
       //Add new data
       if(liveData.data.inverter.data.PAC) { generating.push({ x: new Date(), y: liveData.data.inverter.data.PAC.Value }); }
       if(liveData.data.voltage.data.PowerReal_P_Sum) {
-        if(liveData.data.inverter.data.PAC) { consuming.push({ x: new Date(), y: Math.round(liveData.data.voltage.data.PowerReal_P_Sum + liveData.data.inverter.data.PAC.Value) }); }
-        else { consuming.push({ x: new Date(), y: Math.round(liveData.data.voltage.data.PowerReal_P_Sum) }); }
+        if(liveData.data.inverter.data.PAC) {
+          let value = liveData.data.voltage.data.PowerReal_P_Sum + liveData.data.inverter.data.PAC.Value;
+          consuming.push({
+            x: new Date(),
+            y: value > 0 ? Math.round(value) : 0
+          });
+        }
+        else {
+          consuming.push({
+            x: new Date(),
+            y: liveData.data.voltage.data.PowerReal_P_Sum > 0 ? Math.round(liveData.data.voltage.data.PowerReal_P_Sum) : 0
+          });
+        }
       }
 
       //Cap array at 1 minute

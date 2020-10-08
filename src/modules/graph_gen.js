@@ -94,8 +94,8 @@ export class Graph extends Component {
         var consumption = consumption_array.reduce((sum, value) => { return sum + value }, 0) / consumption_array.length;
 
         //Push data to final array
-        generating_data.push({ x: new Date(data[i].datetime), y: generating });
-        consuming_data.push({ x: new Date(data[i].datetime), y: consumption + generating });
+        generating_data.push({ x: new Date(data[i].datetime), y: generating > 0 ? generating : 0 });
+        consuming_data.push({ x: new Date(data[i].datetime), y: consumption + generating > 0 ? consumption + generating : 0 });
         watts_used += consumption + generating;
         paid_watts += consumption > 0 ? consumption : 0;
         sold_watts += consumption < 0 ? consumption : 0;
