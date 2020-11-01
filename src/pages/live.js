@@ -17,7 +17,8 @@ export class Live extends Component {
       loading: true
     },
     generating: [],
-    consuming: []
+    load: [],
+    grid: [],
   }
 
   async componentDidMount() {
@@ -25,50 +26,40 @@ export class Live extends Component {
     this.GetAnalytics();
 
     //Set Interval of Refresh
-    if(updateTimer === null) { updateTimer = setInterval(() => { this.setState({ nextUpdate: new Date().getTime() }); this.GetAnalytics(); }, 10000); }
+    if(updateTimer === null) { updateTimer = setInterval(() => { this.setState({ nextUpdate: new Date().getTime() }); this.GetAnalytics(); }, 1000); }
   }
   async componentWillUnmount() { clearInterval(updateTimer); updateTimer = null; }
   
   async GetAnalytics() {
     const liveData = (await apiRequest.GetLiveData());
+    const liveFlow = liveData.data.liveFlow.data;
 
     if(liveData?.error === null) {
       //Grab previous logged data
       let generating = this.state.generating;
-      let consuming = this.state.consuming;
+      let load = this.state.load;
+      let grid = this.state.grid;
 
       //Add new data
-      if(liveData.data.inverter.data.PAC) { generating.push({ x: new Date(), y: liveData.data.inverter.data.PAC.Value }); }
-      if(liveData.data.voltage.data.PowerReal_P_Sum) {
-        if(liveData.data.inverter.data.PAC) {
-          let value = liveData.data.voltage.data.PowerReal_P_Sum + liveData.data.inverter.data.PAC.Value;
-          consuming.push({
-            x: new Date(),
-            y: value > 0 ? Math.round(value) : 0
-          });
-        }
-        else {
-          consuming.push({
-            x: new Date(),
-            y: liveData.data.voltage.data.PowerReal_P_Sum > 0 ? Math.round(liveData.data.voltage.data.PowerReal_P_Sum) : 0
-          });
-        }
-      }
+      generating.push({ x: new Date(), y: Math.round(liveFlow.Site.P_PV) });
+      load.push({ x: new Date(), y: Math.round(liveFlow.Site.P_Load) });
+      grid.push({ x: new Date(), y: Math.round(liveFlow.Site.P_Grid) });
 
       //Cap array at 1 minute
       if(generating.length > 60){ generating.shift(); }
-      if(consuming.length > 60){ consuming.shift(); }
+      if(load.length > 60){ load.shift(); }
+      if(grid.length > 60){ grid.shift(); }
 
       //Save state
       this.setState({
         status: { status: 'ready', statusText: `Finished Loading Analytics.`, loading: false },
-        generating, consuming
+        generating, load, grid
       });
     }
   }
 
   render () {
-    const { generating, consuming } = this.state;
+    const { generating, load, grid } = this.state;
     const { status, statusText } = this.state.status;
     if(status === "error") { return (<Error statusText={ statusText } />) }
     else if(status === "ready") {
@@ -77,7 +68,7 @@ export class Live extends Component {
           <div className="live-graph-container">
             <div className="live-generating">
               <div className="graph">
-                <div className="graph-title">Live Generation (10s Interval)</div>
+                <div className="graph-title">Live Production (10s Interval)</div>
                 <div className="graph-data">
                   <div>Generating: { generating[generating.length-1] ? `${ generating[generating.length-1].y }W` : `Offline` }</div>
                 </div>
@@ -89,17 +80,31 @@ export class Live extends Component {
                 </XYPlot>
               </div>
             </div>
-            <div className="live-consumption">
+            <div className="live-load">
               <div className="graph">
                 <div className="graph-title">Live Consumption (10s Interval)</div>
                 <div className="graph-data">
-                  <div>Consusming: { consuming[consuming.length-1] ? `${ consuming[consuming.length-1].y }W` : `Offline` }</div>
+                  <div>Consusming: { load[load.length-1] ? `${ load[load.length-1].y }W` : `Offline` }</div>
                 </div>
                 <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
                   <VerticalGridLines style={{ stroke: "#333333" }} />
                   <XAxis title="Time" />
                   <YAxis title="Watts" />
-                  <AreaSeries data={ consuming } color={ "#ff7417" } fill={ "#885838" } opacity={ 0.9 } curve={'curveLinear'} />
+                  <AreaSeries data={ load } color={ "#ff7417" } fill={ "#885838" } opacity={ 0.9 } curve={'curveLinear'} />
+                </XYPlot>
+              </div>
+            </div>
+            <div className="live-grid">
+              <div className="graph">
+                <div className="graph-title">Live Grid (10s Interval)</div>
+                <div className="graph-data">
+                  <div>{ grid[grid.length-1].y > 0 ? 'Buying' : 'Selling' }: { grid[grid.length-1] ? `${ grid[grid.length-1].y }W` : `Offline` }</div>
+                </div>
+                <XYPlot xType="time" width={ 1200 } height={ 250 } margin={{ left: 60 }} >
+                  <VerticalGridLines style={{ stroke: "#333333" }} />
+                  <XAxis title="Time" />
+                  <YAxis title="Watts" />
+                  <AreaSeries data={ grid } color={ "#18c100" } fill={ "#006d0a" } opacity={ 0.9 } curve={'curveLinear'} />
                 </XYPlot>
               </div>
             </div>
