@@ -8,6 +8,7 @@ import Header from './modules/header';
 import Home from './pages/home';
 import Live from './pages/live';
 import Faults from './pages/faults';
+import Crypto from './pages/crypto';
 
 class App extends React.Component {
 
@@ -52,6 +53,7 @@ class App extends React.Component {
             <Route path="/home" render={ props => (<Home />) } />
             <Route path="/live" render={ props => (<Live />) } />
             <Route path="/faults" render={ props => (<Faults />) } />
+            <Route path="/crypto" render={ props => (<Crypto />) } />
           </Switch>
         </div>
       </Router>

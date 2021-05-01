@@ -1,0 +1,22 @@
+.fees-container {
+  padding-top: 25px;
+}
+.fees-table {
+  height: 300px;
+  width: max-content;
+  overflow-y: auto;
+  margin: auto;
+}
+.fees-row {
+  display: grid;
+  grid-template-columns: 200px 200px auto;
+  width: 1200px;
+  margin: auto;
+}
+.fees-row:nth-child(even) {
+  background: rgba(0,0,0,0.2);
+}
+.fees-column:nth-child(3) {
+  text-align: right;
+  padding: 0px 10px;
+}

@@ -1,7 +1,7 @@
-async function apiRequest(path) {
+async function apiRequest(path, port) {
   //Headers for requests
   const headers = { headers: { "Content-Type": "application/json" } };
-  const request = await fetch(`http://10.1.1.14:3100${path}`, headers);
+  const request = await fetch(`http://10.1.1.14:${port}${path}`, headers);
   const response = await request.json();
   if(request.ok && response.ErrorCode && response.ErrorCode !== 1) {
     //Error with api, might have sent bad headers.
@@ -17,5 +17,6 @@ async function apiRequest(path) {
   }
 }
 
-export const GetMonthlyStatus = async () => apiRequest(`/GetMonthlyStatus`);
-export const GetLiveData = async () => apiRequest(`/GetLiveData`);
+export const GetMonthlyStatus = async () => apiRequest(`/GetMonthlyStatus`, 3100);
+export const GetLiveData = async () => apiRequest(`/GetLiveData`, 3100);
+export const GetMonthlyRates = async () => apiRequest(`/GetMonthlyRates`, 3110);

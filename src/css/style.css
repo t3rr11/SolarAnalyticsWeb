@@ -2,6 +2,7 @@
 @import url('loader.css');
 @import url('header.css');
 @import url('faults.css');
+@import url('crypto.css');
 @import url('graph.css');
 
 :root {
